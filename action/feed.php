@@ -33,6 +33,8 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         $opt['tags'] = $_REQUEST['tags'];
         $opt['sortby'] = $_REQUEST['sortby'];
         $opt['sortorder'] = $_REQUEST['sortorder'];
+        $opt['podcast_format'] = $_REQUEST['podcast_format'];
+        $opt['podcast_extensions'] = explode( ',', $this->getConf( 'podcast_extensions' ));
         $opt['feed_type'] = 'RSS2.0';
     }
     function handle_mode_unknown(&$event, $param) {
@@ -85,7 +87,7 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
             $event->data['data'][] = array(
                 'id' => $row['page'],
                 'date' => $row['created'],
-                'user' => $row['author']." (".$row['mail'].")",
+                'user' => $row['mail']." (".$row['author'].")",
                 'entry' => $row );
         }
     }
@@ -94,6 +96,12 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         if ($opt['feed_mode'] !== 'podcast') return;
         $opt['link_to'] = 'current';
         $opt['item_content'] = 'html';
+
+        $ext = ( $opt['podcast_format'] 
+          && in_array( $opt['podcast_format'], $opt['podcast_extensions'] ))
+              ? $opt['podcast_format']
+              : $this->getConf( 'podcast_filetype' );
+
         $ditem = $event->data['ditem'];
         $p = $event->data['ditem']['entry']['data_entry'];
 
@@ -117,7 +125,7 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         $page_url = wl($id, 's=feed', true, '&');
         $tag_url = wl( 'tags:', 's=feed', true, '&');
         $file_url = $this->getConf( 'podcast_prefix' )
-                .$p['nr'].".".$this->getConf( 'podcast_filetype' );
+                .$p['nr'].".".$ext;
         $length = $this->pcasthelper->get_headers_length( $file_url );
         $filetype = 'audio/mpeg';
 
