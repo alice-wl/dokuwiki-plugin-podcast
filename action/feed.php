@@ -85,7 +85,7 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
             $event->data['data'][] = array(
                 'id' => $row['page'],
                 'date' => $row['created'],
-                'user' => $row['author'],
+                'user' => $row['author']." (".$row['mail'].")",
                 'entry' => $row );
         }
     }
@@ -137,14 +137,14 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
 
         $event->data['item']->description = preg_replace('#[^\n]*?>\s*?' . preg_quote(hsc($firstheading), '#') . '\s*?<.*\n#', '', $output, 1);
         $event->data['item']->title = $ditem['entry']['title'];
-        $event->data['item']->guid = $ditem['entry']['pid'];
+        $event->data['item']->guid = getBaseURL( 1 ).$ditem['entry']['page'];
 
-        $event->data['guid'] = $file_url;
-        $event->data['item']->enclosure = (object)array( 
-                'url' => $file_url, 'length' => $length, 'type' => $filetype );
+        if( $length ) {
+          $event->data['item']->enclosure = (object)array( 
+                  'url' => $file_url, 'length' => $length, 'type' => $filetype ); }
 
-        if( $p['image'] ) { // kaputt
-            $event->media = $p['image']; }
+#        if( $p['image'] ) { // kaputt
+#            $event->media = $p['image']; }
 
         $output = '';
         ob_start();
