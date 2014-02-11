@@ -16,11 +16,39 @@ class helper_plugin_podcast extends DokuWiki_Plugin {
     $rows = $sqlite->res2arr($res);
     $cnt = count($rows);
     $p = array( );
-    if( $cnt ) {  
+    if( $cnt ) {
       foreach( $rows as $i => $d ) {
         if( isset( $p[$d['key']] )) { $p[$d['key']].= ', '.$d['value']; }
         else { $p[$d['key']] = $d['value']; }}}
+    if( !$p['nr'] ) {
+      $path = explode( ':', $page );
+      $p['nr'] = array_pop( $path ); }
+
+    $files = $this->get_source_files( $p['nr'] );
+
+    $p['files'] = $files;
     return $p;
+  }
+  function get_source_files( $name ) {
+    $name = $this->getConf( 'podcast_prefix' ).$name;
+    $extensions = explode( ',', $this->getConf( 'podcast_extensions' ));
+    $files = array( );
+
+    // check page metadata for cached sources
+    // actly no idea what i m doing here 
+    $meta = p_get_metadata( $page, 'source', METADATA_RENDER_USING_CACHE );
+    foreach( $extensions as $ext ) {
+      $f = "$name.$ext";
+      if( isset( $meta[$ext] ) && $meta[$ext]['url'] == $f ) {
+        $files[$ext] = $meta[$ext]; }
+      else {
+        $s = $this->get_headers_length( $f );
+        $files[$ext] = array( 
+            'url' => $f,
+            'size' => $s,
+            'hsize' => $this->gethumanfilesize( $s, 0 )); }}
+    p_set_metadata( $page, array( 'source' => $files ), false, false );
+    return $files;
   }
   function get_headers_length($url) {
     $url_info=parse_url($url);
@@ -63,6 +91,7 @@ class helper_plugin_podcast extends DokuWiki_Plugin {
     $name = $this->getConf( 'podcast_prefix' ).$name;
     $extensions = explode( ',', $this->getConf( 'podcast_extensions' ));
     $files = array( );
+
     foreach( $extensions as $ext ) {
       $f = "$name.$ext";
       $s = $this->get_headers_length( $f );
