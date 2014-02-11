@@ -54,9 +54,6 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         $conf = array_merge($conf, $this->defaultConf);
         $posts = $this->entryhelper->get_posts($conf);
         if( $opt['feed_mode'] === 'podcast' ) {
-            $dthlp =& plugin_load('helper', 'data');
-            $sqlite = $dthlp->_getDB();
-            if(!$sqlite) return false;
             // image -> url, title, link, widh, height, description
             // language
             // copyright
@@ -67,19 +64,7 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
             if( auth_quickaclcheck( $row['id'] ) < AUTH_READ ) {
                 continue; }
             if( $opt['feed_mode'] === 'podcast' ) {
-                $res = $sqlite->query( 'SELECT 
-                    T1.key as key,
-                    T1.value as value
-                  FROM pages
-                    LEFT JOIN data AS T1 ON T1.pid = pages.pid
-                    WHERE page = ?', $row['page'] );
-                $rows = $sqlite->res2arr($res);
-                $cnt = count($rows);
-                $p = array( );
-                if( $cnt ) {  
-                foreach( $rows as $i => $d ) {
-                  if( isset( $p[$d['key']] )) { $p[$d['key']].= ', '.$d['value']; }
-                  else { $p[$d['key']] = $d['value']; }}}
+                $p = $this->pcasthelper->get_info( $row['page'] );
                 if( !isset( $p['nr'] )) {
                     $path = explode( ':', $row['page'] );
                     $p['nr'] = array_pop( $path ); } 

@@ -3,6 +3,25 @@
  */
 if (!defined('DOKU_INC')) die();
 class helper_plugin_podcast extends DokuWiki_Plugin {
+  function get_info( $page ) {
+            $dthlp =& plugin_load('helper', 'data');
+    $sqlite = $dthlp->_getDB();
+    if(!$sqlite) return false;
+    $res = $sqlite->query( 'SELECT 
+	T1.key as key,
+	T1.value as value
+      FROM pages
+	LEFT JOIN data AS T1 ON T1.pid = pages.pid
+	WHERE page = ?', $page );
+    $rows = $sqlite->res2arr($res);
+    $cnt = count($rows);
+    $p = array( );
+    if( $cnt ) {  
+      foreach( $rows as $i => $d ) {
+        if( isset( $p[$d['key']] )) { $p[$d['key']].= ', '.$d['value']; }
+        else { $p[$d['key']] = $d['value']; }}}
+    return $p;
+  }
   function get_headers_length($url) {
     $url_info=parse_url($url);
     $port = isset($url_info['port']) ? $url_info['port'] : 80;
