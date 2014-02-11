@@ -1,34 +1,16 @@
 <?php
-  $dthlp =& plugin_load('helper', 'data');
-  $sqlite = $dthlp->_getDB();
   $pcasthelper =& plugin_load("helper", "podcast");
 
-  if(!$sqlite) return false;
-
   $page = $entry->entry['page'];
-  $res = $sqlite->query( 'SELECT * FROM pages
-    LEFT JOIN data AS T1 ON T1.pid = pages.pid
-    WHERE page = ?', $page );
-  $rows = $sqlite->res2arr($res);
-  $cnt = count($rows);
-  $p = array( );
 
-  if( $cnt ) { 
-    foreach( $rows as $i => $d ) {
-      if( isset( $p[$d['T1.key']] )) {
-        $p[$d['T1.key']].= ', '.$d['T1.value']; }
-      else {
-        $p[$d['T1.key']] = $d['T1.value']; }}        
+  if( $pcasthelper ) {
+    $p = $pcasthelper->get_info( $page );
 
-  if( !$p['nr'] ) {
+    if( !$p['nr'] ) {
       $path = explode( ':', $page );
       $p['nr'] = array_pop( $path ); } 
-  $url = $this->getConf( 'podcast_prefix' )
-          .$p['nr'].".".$this->getConf( 'podcast_filetype' ); }
+    $files = $p['files']; }
 
-  $extensions = explode( ',', $this->getConf( 'podcast_extensions' ));
-  if( $pcasthelper ) {
-    $files = $pcasthelper->getfiles( $p['nr'], $this->getConf( 'podcast_prefix' ), $extensions ); }
 ?>
 <div class="blogtng_list"><?php
     //show headline
@@ -40,15 +22,21 @@
     $entry->tpl_link();
     echo "\"> // ".$entry->entry["title"]."</a></h1>";
 
-    if( count( $files )) {
-      echo "<div class='podcastaudio'>";
+    $source = array( );
+    $links = array( );
+    foreach( $files as $ext => $f ) {
+      if( !$f['size'] ) continue;
+      $source[] = "<source src='".$f['url']."' />";
+      $links[]  = " <li><a href='".$f['url']."' />".$p['nr'].".$ext(".$f['hsize'].")</a></li>"; }
+
+    echo "<div class='podcastaudio'>";
+    if( count( $source )) {
       echo "<audio controls>";
-      foreach( $files as $ext => $f ) {
-        echo "<source src='".$f['url']."' />"; }
-      echo "</audio>";
+      echo implode( "\n", $source );
+      echo "</audio>"; }
+    if( count( $links )) {
       echo "<ul>";
-      foreach( $files as $ext => $f ) {
-        echo "<li><a href='".$f['url']."' />".$p['nr'].".$ext (".$f['hsize'].")</a></li>"; }
+      echo implode( "\n", $links );
       echo "</ul>";
       echo "</div>"; }
 
