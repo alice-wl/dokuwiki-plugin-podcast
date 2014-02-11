@@ -65,9 +65,6 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
                 continue; }
             if( $opt['feed_mode'] === 'podcast' ) {
                 $p = $this->pcasthelper->get_info( $row['page'] );
-                if( !isset( $p['nr'] )) {
-                    $path = explode( ':', $row['page'] );
-                    $p['nr'] = array_pop( $path ); } 
                 $row['data_entry'] = $p; }
             $event->data['data'][] = array(
                 'id' => $row['page'],
@@ -82,17 +79,9 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         $opt['link_to'] = 'current';
         $opt['item_content'] = 'html';
 
-        $ext = ( $opt['podcast_format'] 
-          && in_array( $opt['podcast_format'], $opt['podcast_extensions'] ))
-              ? $opt['podcast_format']
-              : $this->getConf( 'podcast_filetype' );
+        $length = 0;
 
         $ditem = $event->data['ditem'];
-        $p = $event->data['ditem']['entry']['data_entry'];
-
-        if( !$p['nr'] ) {
-          $path = explode( ':', $ditem['id'] );
-          $p['nr'] = array_pop( $path ); }
 
         // don't add drafts to the feed
         if(p_get_metadata($ditem['id'], 'type') == 'draft') {
@@ -109,10 +98,17 @@ class action_plugin_podcast_feed extends DokuWiki_Action_Plugin{
         $this->entryhelper->load_by_row($ditem['entry']);
         $page_url = wl($id, 's=feed', true, '&');
         $tag_url = wl( 'tags:', 's=feed', true, '&');
-        $file_url = $this->getConf( 'podcast_prefix' )
-                .$p['nr'].".".$ext;
-        $length = $this->pcasthelper->get_headers_length( $file_url );
-        $filetype = 'audio/mpeg';
+
+        // get podcast data 
+        $p = $event->data['ditem']['entry']['data_entry'];
+        $ext = ( $opt['podcast_format'] 
+          && in_array( $opt['podcast_format'], $opt['podcast_extensions'] ))
+              ? $opt['podcast_format']
+              : $this->getConf( 'podcast_filetype' );
+        if( isset( $p['files'][$ext] )) {
+          $file_url = $p['files'][$ext]['url'];
+          $length = $p['files'][$ext]['size'];
+          $filetype = 'audio/mpeg'; }
 
         $output = '';
         ob_start();
